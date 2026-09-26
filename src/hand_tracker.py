@@ -58,6 +58,8 @@ def main():
                 screen_x = int(index_finger.x * screen_width)
                 screen_y = int(index_finger.y * screen_height)
 
+                pyautogui.moveTo(screen_x, screen_y)
+
                 cv2.circle(
                     frame,
                     (index_x, index_y),
@@ -68,18 +70,8 @@ def main():
 
                 cv2.putText(
                     frame,
-                    f"Camera: ({index_x}, {index_y})",
-                    (10, 40),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    0.7,
-                    (0, 0, 255),
-                    2,
-                )
-
-                cv2.putText(
-                    frame,
                     f"Screen: ({screen_x}, {screen_y})",
-                    (10, 75),
+                    (10, 40),
                     cv2.FONT_HERSHEY_SIMPLEX,
                     0.7,
                     (0, 0, 255),
@@ -120,7 +112,7 @@ def main():
                         2,
                     )
 
-        cv2.imshow("Hand Tracking", frame)
+        cv2.imshow("Hand Gesture Mouse", frame)
 
         if cv2.waitKey(1) & 0xFF == ord("q"):
             break
