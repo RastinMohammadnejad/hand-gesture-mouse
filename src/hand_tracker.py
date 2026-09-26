@@ -1,11 +1,14 @@
 import cv2
 import mediapipe as mp
+import pyautogui
 
 
 MODEL_PATH = "models/hand_landmarker.task"
 
 
 def main():
+    screen_width, screen_height = pyautogui.size()
+
     base_options = mp.tasks.BaseOptions(model_asset_path=MODEL_PATH)
 
     options = mp.tasks.vision.HandLandmarkerOptions(
@@ -34,6 +37,8 @@ def main():
 
         frame = cv2.flip(frame, 1)
 
+        frame_height, frame_width = frame.shape[:2]
+
         rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
         mp_image = mp.Image(
@@ -47,8 +52,11 @@ def main():
             for hand_landmarks in result.hand_landmarks:
                 index_finger = hand_landmarks[8]
 
-                index_x = int(index_finger.x * frame.shape[1])
-                index_y = int(index_finger.y * frame.shape[0])
+                index_x = int(index_finger.x * frame_width)
+                index_y = int(index_finger.y * frame_height)
+
+                screen_x = int(index_finger.x * screen_width)
+                screen_y = int(index_finger.y * screen_height)
 
                 cv2.circle(
                     frame,
@@ -60,17 +68,27 @@ def main():
 
                 cv2.putText(
                     frame,
-                    f"Index: ({index_x}, {index_y})",
+                    f"Camera: ({index_x}, {index_y})",
                     (10, 40),
                     cv2.FONT_HERSHEY_SIMPLEX,
-                    0.8,
+                    0.7,
+                    (0, 0, 255),
+                    2,
+                )
+
+                cv2.putText(
+                    frame,
+                    f"Screen: ({screen_x}, {screen_y})",
+                    (10, 75),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.7,
                     (0, 0, 255),
                     2,
                 )
 
                 for landmark in hand_landmarks:
-                    x = int(landmark.x * frame.shape[1])
-                    y = int(landmark.y * frame.shape[0])
+                    x = int(landmark.x * frame_width)
+                    y = int(landmark.y * frame_height)
 
                     cv2.circle(
                         frame,
@@ -85,13 +103,13 @@ def main():
                     end = hand_landmarks[connection.end]
 
                     start_point = (
-                        int(start.x * frame.shape[1]),
-                        int(start.y * frame.shape[0]),
+                        int(start.x * frame_width),
+                        int(start.y * frame_height),
                     )
 
                     end_point = (
-                        int(end.x * frame.shape[1]),
-                        int(end.y * frame.shape[0]),
+                        int(end.x * frame_width),
+                        int(end.y * frame_height),
                     )
 
                     cv2.line(
