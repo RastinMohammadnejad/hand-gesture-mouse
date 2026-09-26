@@ -45,11 +45,40 @@ def main():
 
         if result.hand_landmarks:
             for hand_landmarks in result.hand_landmarks:
+                index_finger = hand_landmarks[8]
+
+                index_x = int(index_finger.x * frame.shape[1])
+                index_y = int(index_finger.y * frame.shape[0])
+
+                cv2.circle(
+                    frame,
+                    (index_x, index_y),
+                    10,
+                    (0, 0, 255),
+                    -1,
+                )
+
+                cv2.putText(
+                    frame,
+                    f"Index: ({index_x}, {index_y})",
+                    (10, 40),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.8,
+                    (0, 0, 255),
+                    2,
+                )
+
                 for landmark in hand_landmarks:
                     x = int(landmark.x * frame.shape[1])
                     y = int(landmark.y * frame.shape[0])
 
-                    cv2.circle(frame, (x, y), 5, (0, 255, 0), -1)
+                    cv2.circle(
+                        frame,
+                        (x, y),
+                        5,
+                        (0, 255, 0),
+                        -1,
+                    )
 
                 for connection in mp.tasks.vision.HandLandmarksConnections.HAND_CONNECTIONS:
                     start = hand_landmarks[connection.start]
