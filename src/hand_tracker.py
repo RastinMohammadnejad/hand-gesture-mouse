@@ -2,22 +2,28 @@ import cv2
 import mediapipe as mp
 
 
+MODEL_PATH = "models/hand_landmarker.task"
+
+
 def main():
+    base_options = mp.tasks.BaseOptions(model_asset_path=MODEL_PATH)
+
+    options = mp.tasks.vision.HandLandmarkerOptions(
+        base_options=base_options,
+        num_hands=1,
+        min_hand_detection_confidence=0.7,
+        min_hand_presence_confidence=0.7,
+        min_tracking_confidence=0.7,
+    )
+
+    hand_landmarker = mp.tasks.vision.HandLandmarker.create_from_options(options)
+
     camera = cv2.VideoCapture(0)
 
     if not camera.isOpened():
         print("Could not open the camera.")
+        hand_landmarker.close()
         return
-
-    mp_hands = mp.solutions.hands
-    mp_draw = mp.solutions.drawing_utils
-
-    hands = mp_hands.Hands(
-        static_image_mode=False,
-        max_num_hands=1,
-        min_detection_confidence=0.7,
-        min_tracking_confidence=0.7,
-    )
 
     while True:
         success, frame = camera.read()
@@ -30,22 +36,49 @@ def main():
 
         rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-        result = hands.process(rgb_frame)
+        mp_image = mp.Image(
+            image_format=mp.ImageFormat.SRGB,
+            data=rgb_frame,
+        )
 
-        if result.multi_hand_landmarks:
-            for hand_landmarks in result.multi_hand_landmarks:
-                mp_draw.draw_landmarks(
-                    frame,
-                    hand_landmarks,
-                    mp_hands.HAND_CONNECTIONS,
-                )
+        result = hand_landmarker.detect(mp_image)
+
+        if result.hand_landmarks:
+            for hand_landmarks in result.hand_landmarks:
+                for landmark in hand_landmarks:
+                    x = int(landmark.x * frame.shape[1])
+                    y = int(landmark.y * frame.shape[0])
+
+                    cv2.circle(frame, (x, y), 5, (0, 255, 0), -1)
+
+                for connection in mp.tasks.vision.HandLandmarksConnections.HAND_CONNECTIONS:
+                    start = hand_landmarks[connection.start]
+                    end = hand_landmarks[connection.end]
+
+                    start_point = (
+                        int(start.x * frame.shape[1]),
+                        int(start.y * frame.shape[0]),
+                    )
+
+                    end_point = (
+                        int(end.x * frame.shape[1]),
+                        int(end.y * frame.shape[0]),
+                    )
+
+                    cv2.line(
+                        frame,
+                        start_point,
+                        end_point,
+                        (255, 0, 0),
+                        2,
+                    )
 
         cv2.imshow("Hand Tracking", frame)
 
         if cv2.waitKey(1) & 0xFF == ord("q"):
             break
 
-    hands.close()
+    hand_landmarker.close()
     camera.release()
     cv2.destroyAllWindows()
 
